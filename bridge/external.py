@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
-
+import time
 import socket
 import pickle
 import struct
+import requests
+from dateutil import parser
 
 GRAPHITE_PORT = 2004
 GRAPHITE_SERVER = '127.17.0.1'
+
+
 
 def main():
   print( 'Starting....' )
@@ -15,13 +19,14 @@ def main():
   
   try:
     while True:
-      
+      observed = requests.get( 'https://api.water.noaa.gov/nwps/v1/gauges/COAU1/stageflow/observed' )
+      data = observed.json()
 
       metric_list = []
 
-      
-      metric_list.append( ( f'{node_name}.{metric}', ( -1, value ) ) )
-      
+      for item in data[ 'data' ][-10:]:  # we we are geting 30 min at a time, the data is every 5 min, so 6 plus a few to overlap, just in case
+        metric_list.append( ( f'coalcreek.level', ( parser.parse( item['validTime'] ).timestamp(), item[ 'primary' ] ) ) )
+
       print( metric_list )
       graphite = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
       graphite.connect( ( GRAPHITE_SERVER, GRAPHITE_PORT ) )
@@ -29,15 +34,14 @@ def main():
       header = struct.pack( '!L', len( payload ) )
       graphite.sendall( header + payload )
       graphite.close()
-  
+
+      time.sleep( 30 * 60 ) # check every 30 min
+
   except Exception as e:
-    print( "Got Exception", e )
-  
-  finally:
-    reciever.close()
-  
+    print( "Got Exception", e, e.__class__ )
+
   print( "Done" )
-  
+
 
 if __name__ == '__main__':
   main()
