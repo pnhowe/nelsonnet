@@ -7,16 +7,14 @@ import struct
 import requests
 from dateutil import parser
 
-GRAPHITE_PORT = 2004
-GRAPHITE_SERVER = '127.17.0.1'
-
+from .config import GRAPHITE_PORT, GRAPHITE_SERVER
 
 
 def main():
   print( 'Starting....' )
-  
+
   print( f'Connecting to "{GRAPHITE_SERVER}":"{GRAPHITE_PORT}"...' )
-  
+
   try:
     while True:
       observed = requests.get( 'https://api.water.noaa.gov/nwps/v1/gauges/COAU1/stageflow/observed' )

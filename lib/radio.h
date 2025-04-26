@@ -1,6 +1,8 @@
 #ifndef RADIO_H
 #define RADIO_H
 
+#include <RH_RF95.h>
+
 #define LED 13
 
 #define RFM95_CS 8

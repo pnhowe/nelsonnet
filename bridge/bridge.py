@@ -5,16 +5,16 @@ import socket
 import pickle
 import struct
 
+from .config import GRAPHITE_PORT, GRAPHITE_SERVER
+
 RECIEVER_PORT = '/dev/ttyACM0'
-GRAPHITE_PORT = 2004
-GRAPHITE_SERVER = '127.17.0.1'
 
 def main():
   print( 'Starting....' )
   print( f'Opening "{RECIEVER_PORT}"...' )
-  
+
   reciever = serial.Serial( RECIEVER_PORT, 9600, timeout=( 60 * 15 ) )  # default is 8n1
-  
+
   print( f'Connecting to "{GRAPHITE_SERVER}":"{GRAPHITE_PORT}"...' )
   
   print( 'Looking for data...' )

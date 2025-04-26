@@ -1,18 +1,20 @@
-#include <SPI.h>
-#include <RH_RF95.h>
-
 #include "radio.h"
 
+// Modify name
 const char SENDER_NAME[] = "test01";
 
+// value of Values to send,myst be a int16_t
 int16_t value1;
 int16_t value2;
 int16_t value3;
+
+// if dirty = 1, then the value will be sent, and dirty will be reset back to 0
 bool dirty1;
 bool dirty2;
 bool dirty3;
 
 // must be named "values"
+// First field is the name 
 const value_entry values[4] = {
   {"test1", &value1, &dirty1},
   {"test2", &value2, &dirty2},
