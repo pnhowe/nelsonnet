@@ -7,7 +7,7 @@ import struct
 import requests
 from dateutil import parser
 
-from .config import GRAPHITE_PORT, GRAPHITE_SERVER
+from config import GRAPHITE_PORT, GRAPHITE_SERVER
 
 
 def main():

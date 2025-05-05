@@ -5,7 +5,7 @@ import socket
 import pickle
 import struct
 
-from .config import GRAPHITE_PORT, GRAPHITE_SERVER
+from config import GRAPHITE_PORT, GRAPHITE_SERVER
 
 RECIEVER_PORT = '/dev/ttyACM0'
 
