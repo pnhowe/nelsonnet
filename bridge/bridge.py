@@ -36,24 +36,23 @@ def main():
         continue
 
       line = reciever.readline().decode().strip()
-      if line[0] == '#':
-        print( f' # {line}' )
-        continue
 
       if line[0] != '$' or line[-1] != '$' or len( line ) != msglen:
-        print( 'Bad Data Line' )
-        print( line )
+        print( f'# {line}')
         continue
+
 
       data_list = line.split( '\t' )
       data_list.pop(0)
       data_list.pop()
 
       try:
-        ( node_name, rRSSI ) = data_list.pop(0).split( ':' )
+        ( node_name, rRSSI, send_counter, sync_counter ) = data_list.pop(0).split( ':' )
         rRSSI = int( rRSSI )
+        send_counter = int( send_counter )
+        sync_counter = int( sync_counter )
       except ( KeyError, ValueError ):
-        print( 'Bad rRSSI' )
+        print( 'Bad rRSSI/send_counter/sync_counter' )
         print( line )
         continue
 
@@ -72,13 +71,15 @@ def main():
         continue
 
       metric_list = []
-      print( f'Node "{node_name}" with Remote RSSI "{rRSSI}" Local RSSI "{lRSSI}' )
+      print( f'Node "{node_name}" with Remote RSSI "{rRSSI}", Local RSSI "{lRSSI}", Send Count "{send_counter}", Sync Count "{sync_counter}"' )
       metric_list.append( ( f'rssi.remote.{node_name}', ( -1, rRSSI ) ) )
       metric_list.append( ( f'rssi.local.{node_name}', ( -1, lRSSI ) ) )
+      metric_list.append( ( f'send_counter.{node_name}', ( -1, send_counter ) ) )
+      metric_list.append( ( f'sync_counter.{node_name}', ( -1, sync_counter ) ) )
 
       for data in data_list:
         try:
-          ( metric, value ) = data.split(':')
+          ( metric, value ) = data.split( ':' )
           value = int( value )
         except ( IndexError, ValueError ):
           print( 'Bad Value' )
