@@ -4,18 +4,20 @@
 
 #include "radio.h"
 
-unsigned int _curOffset;
+unsigned int curOffset;
 
-bool _doSync;
+bool doSync = false;
 
 RTCZero rtc2;
 
-void doSync()
+bool doPrint = false;
+
+void updateOffset()
 {
-  _curOffset += 5;
-  _curOffset %= 60;
-  rtc2.setAlarmMinutes( _curOffset );
-  _doSync = 1;
+  curOffset += 5;
+  curOffset %= 60;
+  rtc2.setAlarmMinutes( curOffset );
+  doSync = true;
 }
 
 void setup()
@@ -31,15 +33,15 @@ void setup()
 
   radio_setup( 10 );
 
-  _curOffset = 0;
+  curOffset = 0;
   rtc2.begin();
   rtc2.setTime(0, 0, 0);
   rtc2.setAlarmSeconds( 0 );
-  rtc2.setAlarmMinutes( _curOffset );
+  rtc2.setAlarmMinutes( curOffset );
   rtc2.enableAlarm( rtc2.MATCH_MMSS );
-  rtc2.attachInterrupt( doSync );
+  rtc2.attachInterrupt( updateOffset );
 
-  _doSync = 0;
+  doSync = false;
 
   Serial.println( "Setup Complete" );
   digitalWrite( LED, LOW );
@@ -55,12 +57,12 @@ void loop()
   while( 1 )
   { 
     Serial.println( "... Loop ..." );
-    while( !( rf95->available() || _doSync ) )
+    while( !( rf95->available() || doSync ) )
       delay( 100 );
 
-    if( _doSync )
+    if( doSync )
     {
-      _doSync = 0;
+      doSync = false;
       sendSync();
       continue;
     }

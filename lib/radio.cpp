@@ -4,12 +4,15 @@
 
 #include "radio.h"
 
-const value_entry *data_values;
+extern bool doPrint;
+extern const char SENDER_NAME[];
+extern const value_entry data_values[];
 
 int _offset;
-int _sendCounter;
-bool _doSend;
-const char *_node_name;
+uint16_t _sendCounter = 0;
+uint16_t _syncCounter = 0;
+bool _doSend = false;
+bool _doSync = true;
 
 const char SYNC_MSG[] = "-SYNC-";
 
@@ -31,19 +34,19 @@ void radio_setup( int power )
 
   if( !rf95.init() )
   {
-    Serial.println( "LoRa radio init failed" );
+    Println( "LoRa radio init failed" );
     while( 1 );
   }
-  Serial.println( "LoRa radio init OK!" );
+  Println( "LoRa radio init OK!" );
 
   // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
   if( !rf95.setFrequency( RF95_FREQ ) )
   {
-    Serial.println( "setFrequency failed" );
+    Println( "setFrequency failed" );
     while( 1 );
   }
-  Serial.print( "Set Freq to: " );
-  Serial.println( RF95_FREQ );
+  Print( "Set Freq to: " );
+  Println( RF95_FREQ );
 
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
@@ -62,18 +65,24 @@ RH_RF95 *getRF95()
 
 void sendValues()
 {
+  digitalWrite( LED, HIGH );
+  Println( "Send..." );
+
   _doSend = false;
   char *cursor = _sending_buff;
   memset(_sending_buff, '\0', sizeof(_sending_buff));
 
-  Serial.println( "--- Send Values ---" );
-
   _sendCounter++;
-  Serial.print( "Send Counter: ");
-  Serial.println(_sendCounter, DEC );
-  cursor += snprintf( cursor, sizeof( _sending_buff ), "$\t%s:%i\t", _node_name, rf95.lastRssi() );
+  Print( "Send Count: ");
+  Println( _sendCounter, DEC );
+  // buff is METRIC_MSG_SIZE (should be 210)
+  // '$' + '\t' + _node_name (max lenth of 10) + ':' + RSSI (16 bit int -> 5 digits plus a sign, yes RSSI is signed) + ':' + send count (16 bit int -> 5 digits) + '\t' -> 25 chars
+  // each metric: name (max 10) + ':' + value ( 16 bit int ) + '\t' -> 18 chars
+  // '$' + '\0' -> 2 chars 
+  // 27 chars for start/end + 10 metrics at 18 = 207
+  cursor += snprintf( cursor, sizeof( _sending_buff ), "$\t%s:%i:%i:%i\t", SENDER_NAME, rf95.lastRssi(), _sendCounter, _syncCounter );
   for( int i = 0; i < 10; i++ )
-  {  
+  {
     if( data_values[i].name[0] == '\0' )
       break;
 
@@ -85,12 +94,16 @@ void sendValues()
   }
   *(cursor++) = '$';
   *(cursor++) = '\0';
-  Serial.println(_sending_buff);
-  Serial.println(strlen(_sending_buff), DEC);
+  Println(_sending_buff);
   rf95.waitCAD();
   rf95.send( (uint8_t*) _sending_buff, strlen(_sending_buff) );
   rf95.waitPacketSent();
-  Serial.println( "--- Values Sent ---" );
+
+  if( !( _sendCounter % 60 ) )
+    _doSync = true;
+
+  Println( "Sent" );
+  digitalWrite( LED, LOW );
 }
 
 void _setDoSend()
@@ -98,22 +111,19 @@ void _setDoSend()
   _doSend = true;
 }
 
-void setupSender( const char *name, const value_entry *values )
+void setupSender()
 {
   uint8_t wrk;
-  int name_len = strlen( name );
+  int name_len = strlen( SENDER_NAME );
   for( int i = 0; i < name_len; i++ )
-    wrk += (unsigned char) name[i]; // yes this will overflow, that is fine
+    wrk += (unsigned char) SENDER_NAME[i]; // yes this will overflow the uint8, that is fine, we are "hashing"
   
-  _node_name = name;
   _offset = wrk % SLICE_COUNT;
-  Serial.print("Offset: ");
-  Serial.println(_offset, DEC);
-
-  data_values = values;
+  Print("Offset: ");
+  Println(_offset, DEC);
 
   rtc.begin();
-  rtc.setTime(0, 0, 0);
+  rtc.setTime( 0, 0, 0 );
   rtc.setAlarmSeconds( _offset );
   rtc.attachInterrupt( _setDoSend );
 }
@@ -123,29 +133,34 @@ void sync()
   char buff[20];
   uint8_t len;
   rtc.disableAlarm();
-  memset(buff, '\0', sizeof(buff));
-  Serial.println( "___ waiting for sync ___" );
+  memset( buff, '\0', sizeof( buff ) );
+  Println( "___ waiting for sync ___" );
+  uint16_t counter = 0;
   while( 1 )
   {
     while( !rf95.available() )
-      ;
+    {
+      digitalWrite( LED, counter < 2000 );
+      counter++;
+    }
     len = sizeof( buff );
     if( !rf95.recv( (uint8_t*) buff, &len ) )
       continue;
 
-    Serial.print( "Len: " );
-    Serial.println(len, DEC );
-    Serial.print( "Got: " );
-    Serial.println( (char*) buff );
-    Serial.print( "RSSI: " );
-    Serial.println( rf95.lastRssi(), DEC );
+    Print( "Len: " );
+    Println(len, DEC );
+    Print( "Got: " );
+    Println( (char*) buff );
+    Print( "RSSI: " );
+    Println( rf95.lastRssi(), DEC );
 
     if( ( len == strlen( SYNC_MSG ) ) && ( strncmp( buff, SYNC_MSG, len ) == 0 ) )
       break;
   }
-  Serial.println( "___ Synced ___" );
-  _sendCounter = 0;
-  rtc.setTime(0, 0, 0);
+  _doSync = false;
+  _syncCounter++;
+  Println( "___ Synced ___" );
+  rtc.setTime( 0, 0, 0 );
   rtc.enableAlarm( rtc.MATCH_SS );
 }
 
@@ -158,12 +173,49 @@ void sendSync()
 
 void senderProcess()
 {
-  digitalWrite( LED, HIGH );
   if( _doSend )
     sendValues();
 
-  if( _sendCounter >= 10 ) // >= 60 ) // every 60 min
+  if( _doSync ) // every 60 min
     sync();
-  
-  digitalWrite( LED, LOW );
+}
+
+size_t Println(const char c[])
+{
+  if( !doPrint )
+    return 0;
+
+  return Serial.println(c);
+}
+
+size_t Println(double num, int digits)
+{
+  if( !doPrint )
+    return 0;
+
+  return Serial.println(num, digits);
+}
+
+size_t Println(unsigned char b, int base)
+{
+  if( !doPrint )
+    return 0;
+
+  return Serial.println(b, base);
+}
+
+size_t Println(int num, int base)
+{
+  if( !doPrint )
+    return 0;
+
+  return Serial.println(num, base);
+}
+
+size_t Print(const char c[])
+{
+  if( !doPrint )
+    return 0;
+
+  return Serial.print(c);
 }

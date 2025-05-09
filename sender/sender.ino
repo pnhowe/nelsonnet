@@ -1,6 +1,9 @@
 #include "radio.h"
 
-// Modify name
+// requires the RaduiHead and RTCZero libraries
+
+// Modify name, max length of 10 (not including the null)
+extern const char SENDER_NAME[];
 const char SENDER_NAME[] = "test01";
 
 // value of Values to send,myst be a int16_t
@@ -13,26 +16,39 @@ bool dirty1;
 bool dirty2;
 bool dirty3;
 
-// must be named "values"
-// First field is the name 
-const value_entry values[4] = {
+// must be named "data_values"
+// First field is the name, max length of 10 (not including the null)
+// max of 10 metrics will be sent
+extern const value_entry data_values[];
+const value_entry data_values[] = {
   {"test1", &value1, &dirty1},
   {"test2", &value2, &dirty2},
   {"test3", &value3, &dirty3},
   {"\0", 0, 0}
 };
 
+bool doPrint = false;
+
 void setup()
 {
   pinMode( LED, OUTPUT );
   digitalWrite( LED, HIGH );
 
-  while( !Serial );
-  Serial.begin( 9600 );
+  uint16_t counter = 200;
+  while( !Serial && counter )
+  {
+    counter--;
+    delay( 10 );
+  }
+  if( counter )
+  {
+    Serial.begin( 9600 );
+    doPrint = true;
+  }
   delay( 1000 );
 
-  Serial.println( "NelsonNet Sender" );
-  Serial.println( SENDER_NAME );
+  Println( "NelsonNet Sender" );
+  Println( SENDER_NAME );
 
   value1 = 5;
   value2 = 89;
@@ -42,16 +58,16 @@ void setup()
   dirty3 = 1;
 
   radio_setup( 10 );
-  setupSender( SENDER_NAME, values );
+  setupSender();
   sync();
 
-  Serial.println( "Setup Complete" );
+  Println( "Setup Complete" );
   digitalWrite( LED, LOW );
 }
 
 void loop() 
 {
-  Serial.println( "... Loop ..." );
+  Println( "... Loop ..." );
   for( int i = 0; i < 5000; i++ )
   {
     value1 = ( value1 + 1 ) % 30;

@@ -16,7 +16,7 @@
 #define SLICE_COUNT 128
 
 // The MAX size is 240 something
-#define METRIC_MSG_SIZE 200
+#define METRIC_MSG_SIZE 210
 
 struct value_entry
 {
@@ -27,9 +27,15 @@ struct value_entry
 
 void radio_setup( int power );
 RH_RF95 *getRF95();
-void setupSender( const char *name, const value_entry *values );
+void setupSender();
 void senderProcess();
 void sync();
 void sendSync();
+
+size_t Println(const char[]);
+size_t Println(double, int = 2);
+size_t Println(unsigned char, int = DEC);
+size_t Println(int, int = DEC);
+size_t Print(const char[]);
 
 #endif
