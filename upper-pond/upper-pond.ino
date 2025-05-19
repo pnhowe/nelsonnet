@@ -63,7 +63,7 @@ void setup() {
 
 void loop() {
   Println( "... Loop ..." );
-  value_level = hc.dist();
+  value_level = ( hc.dist() * 50 + value_level * 50 ) / 100;
   dirty_level = 1;
 
   value_battery = analogRead( batteryPin );

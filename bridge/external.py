@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 -u
 
 import time
 import socket
@@ -17,7 +17,13 @@ def main():
 
   try:
     while True:
-      observed = requests.get( 'https://api.water.noaa.gov/nwps/v1/gauges/COAU1/stageflow/observed' )
+      try:
+        observed = requests.get( 'https://api.water.noaa.gov/nwps/v1/gauges/COAU1/stageflow/observed' )
+      except Exception as e:
+        print( "Got Exception getting data", e, e.__class__ )
+        time.sleep( 15 )
+        continue
+
       data = observed.json()
 
       metric_list = []
