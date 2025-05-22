@@ -2,7 +2,7 @@
 #include <SPI.h>
 #include "radio.h"
 
-// requires the RaduiHead, RTCZero, "HCSR04 ultrasonic sensor" by gamegine libraries
+// requires the RadioHead, RTCZero, "HCSR04 ultrasonic sensor" by gamegine libraries
 
 
 HCSR04 hc(12,11);
