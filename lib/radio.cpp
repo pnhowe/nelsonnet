@@ -45,7 +45,7 @@ void radio_setup( int power )
     Println( "setFrequency failed" );
     while( 1 );
   }
-  Print( "Set Freq to: " );
+  Printchrs( "Set Freq to: " );
   Println( RF95_FREQ );
 
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
@@ -73,7 +73,7 @@ void sendValues()
   memset(_sending_buff, '\0', sizeof(_sending_buff));
 
   _sendCounter++;
-  Print( "Send Count: ");
+  Printchrs( "Send Count: ");
   Println( _sendCounter, DEC );
   // buff is METRIC_MSG_SIZE (should be 210)
   // '$' + '\t' + _node_name (max lenth of 10) + ':' + RSSI (16 bit int -> 5 digits plus a sign, yes RSSI is signed) + ':' + send count (16 bit int -> 5 digits) + '\t' -> 25 chars
@@ -119,7 +119,7 @@ void setupSender()
     wrk += (unsigned char) SENDER_NAME[i]; // yes this will overflow the uint8, that is fine, we are "hashing"
   
   _offset = wrk % SLICE_COUNT;
-  Print("Offset: ");
+  Printchrs("Offset: ");
   Println(_offset, DEC);
 
   rtc.begin();
@@ -147,11 +147,11 @@ void sync()
     if( !rf95.recv( (uint8_t*) buff, &len ) )
       continue;
 
-    Print( "Len: " );
+    Printchrs( "Len: " );
     Println(len, DEC );
-    Print( "Got: " );
+    Printchrs( "Got: " );
     Println( (char*) buff );
-    Print( "RSSI: " );
+    Printchrs( "RSSI: " );
     Println( rf95.lastRssi(), DEC );
 
     if( ( len == strlen( SYNC_MSG ) ) && ( strncmp( buff, SYNC_MSG, len ) == 0 ) )
@@ -212,7 +212,7 @@ size_t Println(int num, int base)
   return Serial.println(num, base);
 }
 
-size_t Print(const char c[])
+size_t Printchrs(const char c[])
 {
   if( !doPrint )
     return 0;
