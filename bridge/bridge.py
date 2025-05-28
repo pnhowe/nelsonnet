@@ -22,7 +22,7 @@ def main():
     while True:
       try:
         line = reciever.readline().decode().strip()
-      except Exception e:
+      except Exception as e:
         print( 'Error Reading line:', e )
         continue
 
