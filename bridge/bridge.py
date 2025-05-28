@@ -20,7 +20,11 @@ def main():
   print( 'Looking for data...' )
   try:
     while True:
-      line = reciever.readline().decode().strip()
+      try:
+        line = reciever.readline().decode().strip()
+      except Exception e:
+        print( 'Error Reading line:', e )
+        continue
 
       if line[0] != '!' or line[-1] != '!':
         print( f'# {line}')
@@ -96,13 +100,12 @@ def main():
       graphite.close()
 
   except Exception as e:
-    print( "Got Exception", e )
+    print( 'Got Exception', e )
 
   finally:
     reciever.close()
 
-
-  print( "Done" )
+  print( 'Done' )
 
 
 if __name__ == '__main__':

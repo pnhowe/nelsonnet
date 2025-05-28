@@ -50,7 +50,7 @@ def main():
           req = requests.get( 'http://192.168.16.51/raw' )
           data = req.json()
           metric_list = []
-          metric_list.append( ( 'data.upper_ditch.level', float( data ) ) )
+          metric_list.append( ( 'data.upper_ditch.level', ( -1, float( data ) ) ) )
           send( metric_list )
 
         except Exception as e:
