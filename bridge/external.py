@@ -12,6 +12,7 @@ from config import GRAPHITE_PORT, GRAPHITE_SERVER
 # in minutes
 COAL_CREEK_INTERVAL = 30
 UPPER_DITCH = 1
+UPPER_POND_PRESSURE = 1
 
 def send( metric_list ):
   print( metric_list )
@@ -48,13 +49,26 @@ def main():
       if counter % UPPER_DITCH == 0:
         try:
           req = requests.get( 'http://192.168.16.51/raw' )
-          data = req.json()
+          level, gpm = req.text.split( '\t' )
           metric_list = []
-          metric_list.append( ( 'data.upper_ditch.level', ( -1, float( data ) ) ) )
+          metric_list.append( ( 'data.upper_ditch.level', ( -1, float( level ) ) ) )
+          metric_list.append( ( 'data.upper_ditch.gpm', ( -1, float( gpm ) ) ) )
           send( metric_list )
 
         except Exception as e:
           print( 'Exception getting Upper Ditch Data', e, e.__class__ )
+
+      if counter % UPPER_POND_PRESSURE == 0:
+        try:
+          req = requests.get( 'http://192.168.16.52/raw' )
+          pressure, threshold = req.text.split( '\t' )
+          metric_list = []
+          metric_list.append( ( 'data.upper_pond.pressure', ( -1, float( pressure ) ) ) )
+          metric_list.append( ( 'data.upper_pond.pressure_threshold', ( -1, float( threshold ) ) ) )
+          send( metric_list )
+
+        except Exception as e:
+          print( 'Exception getting Upper Pond Pressure Data', e, e.__class__ )
 
       counter += 1
       time.sleep( 60 ) # Wait 1 min
