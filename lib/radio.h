@@ -36,6 +36,6 @@ size_t Println(const char[]);
 size_t Println(double, int = 2);
 size_t Println(unsigned char, int = DEC);
 size_t Println(int, int = DEC);
-size_t Print(const char[]);
+size_t Printchrs(const char[]);
 
 #endif
